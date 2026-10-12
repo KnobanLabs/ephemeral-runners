@@ -1,0 +1,26 @@
+# Settings for the Mac itself, shared by every deployment it serves.
+# Optional: without ~/.config/ephemeral-runners/host.toml, every value below
+# is the default. Copy this file there only to change something; it's
+# per machine, so it isn't installed by scripts/install.sh.
+
+# Capacity. Left out, the budgets come from this Mac's hardware, so nothing
+# needs editing when the runners move to a bigger or smaller machine:
+#   memory: total RAM minus host_reserved_mb
+#   vCPUs:  2 x physical cores
+# host_reserved_mb = 8192
+# memory_budget_mb = 28672
+# vcpu_budget = 28
+
+# Apple's Virtualization.framework allows at most 2 macOS guests per host,
+# across all deployments.
+max_macos_vms = 2
+
+# VMs named "<vm_prefix>-*" belong to this controller; leftovers are deleted
+# on startup.
+vm_prefix = "eph"
+
+# How long stopping the controller waits for running jobs to finish. The
+# launchd plist's ExitTimeOut (180 s) must be longer than this.
+drain_timeout = "0s"
+
+log_level = "info"

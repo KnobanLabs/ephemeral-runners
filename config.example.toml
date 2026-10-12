@@ -1,0 +1,59 @@
+# Deployment template: one org (or repo, or enterprise) that a Mac runs jobs
+# for. Copy it to deployments/<name>/config.toml, where <name> is lowercase
+# letters and digits (it appears in VM names), fill in the YOUR-* values,
+# commit it, and install it with
+#   ./scripts/install.sh deployments/<name>/config.toml
+# One Mac can serve several deployments; they share its capacity. Settings
+# for the Mac itself go in host.toml (see host.example.toml).
+# Nothing here is secret; the GitHub App's private key stays out of git.
+
+# Where the runner scale sets register: an org (https://github.com/YOUR-ORG),
+# a single repo (https://github.com/YOUR-ORG/YOUR-REPO, also the only option
+# for personal accounts), or an enterprise (https://github.com/enterprises/YOUR-ENTERPRISE).
+registration_url = "https://github.com/YOUR-ORG"
+# Org runner group. "Default" is the org's own default group, which by
+# default lets every private repo in the org use the runners.
+runner_group = "Default"
+job_timeout = "6h"
+
+# Authenticate as a GitHub App owned by the org (see "Creating the GitHub
+# App" in the README). Keys are per Mac and per deployment, and never
+# committed.
+[github_app]
+client_id = "YOUR-APP-CLIENT-ID"
+installation_id = 0
+private_key_path = "~/.config/ephemeral-runners/keys/YOUR-DEPLOYMENT-NAME.pem"
+
+# Or drop [github_app] and use a token instead: a fine-grained PAT with the
+# org as resource owner and organization permissions "Self-hosted runners:
+# Read and write" and "Administration: Read", stored in the login keychain
+# with `security add-generic-password -a "$USER" -s ephemeral-runners-<name> -w`.
+# This line must then go above the [github_app] table:
+#   token_command = "security find-generic-password -s ephemeral-runners-<name> -w"
+
+# Each pool is a runner scale set; its name is what workflows put in runs-on.
+# Don't use GitHub-hosted labels such as macos-latest or ubuntu-latest.
+
+[[pool]]
+name = "tart-macos"
+os = "macos"
+image = "ghcr.io/cirruslabs/macos-tahoe-xcode:latest"
+cpu = 4
+memory_mb = 8192
+max_runners = 2
+# Booted VMs kept waiting for jobs. Skips the ~30 s macOS boot, but each
+# one holds its memory and CPU while idle.
+min_idle = 0
+
+[[pool]]
+name = "tart-ubuntu"
+os = "linux"
+image = "ghcr.io/cirruslabs/ubuntu-runner-arm64:24.04"
+cpu = 4
+memory_mb = 4096
+disk_gb = 80
+# An upper bound; the host budget usually limits concurrency first.
+max_runners = 16
+min_idle = 0
+# Run x86_64 Linux binaries through Rosetta (needs binfmt setup in a job):
+# run_args = ["--rosetta", "rosetta"]

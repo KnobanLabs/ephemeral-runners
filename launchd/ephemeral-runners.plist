@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  A LaunchAgent, not a LaunchDaemon: Tart VMs run in your login session, and
+  the token is read from your login keychain. It starts when you log in.
+  scripts/install.sh fills in __LABEL__ and __HOME__.
+-->
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>__LABEL__</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>__HOME__/.local/bin/ephemeral-runners</string>
+		<string>-config-dir</string>
+		<string>__HOME__/.config/ephemeral-runners</string>
+		<string>run</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+	<!-- Must exceed drain_timeout so running jobs can finish on stop. -->
+	<key>ExitTimeOut</key>
+	<integer>180</integer>
+	<key>StandardOutPath</key>
+	<string>__HOME__/Library/Logs/ephemeral-runners.log</string>
+	<key>StandardErrorPath</key>
+	<string>__HOME__/Library/Logs/ephemeral-runners.log</string>
+</dict>
+</plist>
