@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 Please report security issues privately through GitHub's
-[private vulnerability reporting](https://github.com/KnobanLabs/ephemeral-runners/security/advisories/new)
+[private vulnerability reporting](https://github.com/KnobanLabs/macos-ephemeral-runners/security/advisories/new)
 (the **Report a vulnerability** button on the Security tab). Don't open a public
 issue or pull request for a vulnerability.
 

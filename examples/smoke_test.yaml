@@ -1,6 +1,6 @@
 # Copyright 2026 Knoban LLC
 # SPDX-License-Identifier: MIT
-# (https://github.com/KnobanLabs/ephemeral-runners)
+# (https://github.com/KnobanLabs/macos-ephemeral-runners)
 
 # Runs 3 jobs on each pool at once and proves every job gets a fresh VM:
 # the marker file one job writes must never be visible to another.

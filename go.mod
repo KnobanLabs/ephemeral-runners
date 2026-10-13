@@ -1,4 +1,4 @@
-module github.com/KnobanLabs/ephemeral-runners
+module github.com/KnobanLabs/macos-ephemeral-runners
 
 go 1.26.2
 
