@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 // Tart wraps the tart CLI.
@@ -144,4 +145,28 @@ func (t *Tart) ExecAsync(name string, stdin io.Reader, out io.Writer, argv ...st
 	exited := make(chan error, 1)
 	go func() { exited <- cmd.Wait() }()
 	return exited, nil
+}
+
+// CheckSoftnet fails unless Softnet can isolate VMs: Tart runs it from PATH,
+// and it needs root to set up the VM network (it drops root straight after),
+// which comes from being owned by root with the setuid bit. A Homebrew
+// upgrade installs a fresh binary without it.
+func CheckSoftnet() error {
+	path, err := exec.LookPath("softnet")
+	if err != nil {
+		return fmt.Errorf("softnet not found on PATH, needed for isolated networking: brew install openai/tools/softnet")
+	}
+	real, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return err
+	}
+	info, err := os.Stat(real)
+	if err != nil {
+		return err
+	}
+	st, ok := info.Sys().(*syscall.Stat_t)
+	if !ok || st.Uid != 0 || info.Mode()&os.ModeSetuid == 0 {
+		return fmt.Errorf("softnet (%s) must be owned by root with the setuid bit for isolated networking; run: sudo chown root:wheel %s && sudo chmod u+s %s", real, real, real)
+	}
+	return nil
 }

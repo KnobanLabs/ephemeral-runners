@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -108,11 +109,33 @@ type Pool struct {
 	RunnerDir string `toml:"runner_dir"`
 	// RunnerUser is the guest user the runner runs as.
 	RunnerUser string `toml:"runner_user"`
+	// Network is "isolated" (the default) or "shared". Isolated VMs use
+	// Tart's Softnet: they can reach the internet, and not your local
+	// network, other VMs or private address ranges. Shared is Tart's plain
+	// NAT, which can reach everything this Mac can.
+	Network string `toml:"network"`
+	// NetworkAllow lists IPv4 CIDRs an isolated VM may reach anyway, e.g.
+	// a package mirror on the LAN.
+	NetworkAllow []string `toml:"network_allow"`
 	// RunArgs are extra arguments for `tart run`, e.g. ["--rosetta", "rosetta"].
 	RunArgs []string `toml:"run_args"`
 }
 
 func (p Pool) isMacOS() bool { return p.OS == "macos" }
+
+func (p Pool) isolated() bool { return p.Network == "isolated" }
+
+// tartRunArgs are the pool's arguments for `tart run`.
+func (p Pool) tartRunArgs() []string {
+	var args []string
+	if p.isolated() {
+		args = append(args, "--net-softnet")
+		if len(p.NetworkAllow) > 0 {
+			args = append(args, "--net-softnet-allow="+strings.Join(p.NetworkAllow, ","))
+		}
+	}
+	return append(args, p.RunArgs...)
+}
 
 // Duration lets TOML values like "6h" decode into a time.Duration.
 type Duration struct{ time.Duration }
@@ -198,6 +221,9 @@ func LoadDeployment(path string) (*Deployment, error) {
 	}
 	for i := range d.Pools {
 		p := &d.Pools[i]
+		if p.Network == "" {
+			p.Network = "isolated"
+		}
 		if p.RunnerUser == "" {
 			p.RunnerUser = "admin"
 		}
@@ -276,6 +302,22 @@ func (d *Deployment) Validate() error {
 		if p.OS != "macos" && p.OS != "linux" {
 			errs = append(errs, fmt.Errorf("pool %q: os must be \"macos\" or \"linux\"", p.Name))
 		}
+		if p.Network != "isolated" && p.Network != "shared" {
+			errs = append(errs, fmt.Errorf("pool %q: network must be \"isolated\" or \"shared\"", p.Name))
+		}
+		for _, cidr := range p.NetworkAllow {
+			if _, _, err := net.ParseCIDR(cidr); err != nil || strings.Contains(cidr, ":") {
+				errs = append(errs, fmt.Errorf("pool %q: network_allow entry %q must be an IPv4 CIDR", p.Name, cidr))
+			}
+		}
+		if len(p.NetworkAllow) > 0 && !p.isolated() {
+			errs = append(errs, fmt.Errorf("pool %q: network_allow only applies to isolated pools", p.Name))
+		}
+		for _, a := range p.RunArgs {
+			if strings.HasPrefix(a, "--net-") {
+				errs = append(errs, fmt.Errorf("pool %q: set networking with network and network_allow, not %s in run_args", p.Name, a))
+			}
+		}
 		if p.CPU <= 0 || p.MemoryMB <= 0 || p.MaxRunners <= 0 {
 			errs = append(errs, fmt.Errorf("pool %q: cpu, memory_mb and max_runners must be positive", p.Name))
 		}
@@ -351,4 +393,16 @@ func sysctlInt(name string) (int64, error) {
 		return 0, fmt.Errorf("sysctl %s: %w", name, err)
 	}
 	return strconv.ParseInt(strings.TrimSpace(string(out)), 10, 64)
+}
+
+// usesIsolatedNetwork reports whether any pool needs Softnet.
+func (c *Config) usesIsolatedNetwork() bool {
+	for _, d := range c.Deployments {
+		for _, p := range d.Pools {
+			if p.isolated() {
+				return true
+			}
+		}
+	}
+	return false
 }

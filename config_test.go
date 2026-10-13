@@ -179,3 +179,40 @@ func TestVMNameRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestPoolNetwork(t *testing.T) {
+	dir := writeConfigDir(t, "", map[string]string{"acme": deploymentTOML("https://github.com/acme")})
+	cfg, err := LoadConfig(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p := cfg.Deployments[0].Pools[0]
+	if p.Network != "isolated" || !cfg.usesIsolatedNetwork() {
+		t.Fatalf("pools should default to isolated networking, got %q", p.Network)
+	}
+	if got := strings.Join(p.tartRunArgs(), " "); got != "--net-softnet" {
+		t.Fatalf("tartRunArgs = %q", got)
+	}
+	p.NetworkAllow = []string{"192.168.1.50/32"}
+	p.RunArgs = []string{"--rosetta", "rosetta"}
+	if got := strings.Join(p.tartRunArgs(), " "); got != "--net-softnet --net-softnet-allow=192.168.1.50/32 --rosetta rosetta" {
+		t.Fatalf("tartRunArgs = %q", got)
+	}
+	p = Pool{Network: "shared", RunArgs: []string{"--rosetta", "rosetta"}}
+	if got := strings.Join(p.tartRunArgs(), " "); got != "--rosetta rosetta" {
+		t.Fatalf("shared tartRunArgs = %q", got)
+	}
+
+	for snippet, want := range map[string]string{
+		"network = \"bridged\"\n":                                  `network must be "isolated" or "shared"`,
+		"network_allow = [\"192.168.1.0/33\"]\n":                   "must be an IPv4 CIDR",
+		"network = \"shared\"\nnetwork_allow = [\"10.0.0.0/8\"]\n": "only applies to isolated pools",
+		"run_args = [\"--net-bridged\", \"en0\"]\n":                "not --net-bridged in run_args",
+	} {
+		body := strings.Replace(deploymentTOML("https://github.com/acme"), "max_runners = 2\n", "max_runners = 2\n"+snippet, 1)
+		dir := writeConfigDir(t, "", map[string]string{"acme": body})
+		if _, err := LoadConfig(dir); err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("%q: expected %q, got %v", snippet, want, err)
+		}
+	}
+}
