@@ -308,11 +308,13 @@ limits to know:
 - **The network:** pools default to `network = "isolated"`, Tart's Softnet:
   a VM can reach globally routable IPv4 addresses (the internet) and nothing
   in private ranges, so not your local network, NAS or other machines, and
-  not other jobs' VMs. Open specific ranges with `network_allow`. The one
-  exception is this Mac itself, as the VMs' gateway, which they need for
-  DHCP and DNS: services the Mac offers on all interfaces (AirPlay Receiver,
-  Screen Sharing, a dev server on `0.0.0.0`) are reachable from jobs, so turn
-  off the ones you don't need. `network = "shared"` is Tart's plain NAT,
+  not other jobs' VMs. Open specific ranges with `network_allow`. Linux VMs
+  can also reach this Mac itself, as their gateway and DNS server, so
+  services the Mac offers on all interfaces (AirPlay Receiver, Screen
+  Sharing, a dev server on `0.0.0.0`) are reachable from Linux jobs; turn off
+  the ones you don't need. macOS VMs can't reach the gateway on Softnet at
+  all, so they're pointed at public DNS instead (Cloudflare and Google; set
+  `dns` on the pool for others). `network = "shared"` is Tart's plain NAT,
   which reaches everything the Mac can.
 - **Inside the VM:** jobs run as an admin user with passwordless sudo, like
   GitHub-hosted runners. The VM's single-use runner registration is readable

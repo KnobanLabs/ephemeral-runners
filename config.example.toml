@@ -53,6 +53,8 @@ min_idle = 0
 # this Mac can reach. network_allow opens specific IPv4 ranges anyway.
 # network = "isolated"
 # network_allow = ["192.168.1.50/32"]
+# DNS servers for isolated macOS VMs (default: Cloudflare and Google).
+# dns = ["1.1.1.1", "8.8.8.8"]
 
 [[pool]]
 name = "tart-ubuntu-arm64"

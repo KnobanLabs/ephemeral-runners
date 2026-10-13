@@ -94,6 +94,15 @@ fi
 GCM_INTERACTIVE=never GIT_TERMINAL_PROMPT=0 ACTIONS_RUNNER_INPUT_JITCONFIG="$JIT" exec ./run.sh < /dev/null
 `
 
+// guestSetDNS points every network service in a macOS guest at the DNS
+// servers given as its arguments. On Softnet, the gateway DHCP names as the
+// DNS server doesn't answer macOS guests, so without this nothing resolves.
+const guestSetDNS = `set -eu
+/usr/sbin/networksetup -listallnetworkservices | tail -n +2 | sed "s/^\*//" | while IFS= read -r s; do
+  /usr/bin/sudo -n /usr/sbin/networksetup -setdnsservers "$s" "$@"
+done
+`
+
 // runVM takes a runner from capacity to teardown. It never returns until the
 // VM is deleted and its registration is gone.
 func (c *poolController) runVM(ctx context.Context, r *runner) {
@@ -171,6 +180,11 @@ func (c *poolController) serve(ctx context.Context, log *slog.Logger, r *runner)
 		return err
 	}
 	log.Info("VM booted", slog.Duration("took", time.Since(start).Round(time.Second)))
+	if len(c.pool.DNS) > 0 {
+		if _, err := c.tart.Exec(ctx, r.name, nil, append([]string{"/bin/sh", "-c", guestSetDNS, "eph"}, c.pool.DNS...)...); err != nil {
+			return fmt.Errorf("set guest DNS: %w", err)
+		}
+	}
 
 	jit, err := c.client.GenerateJitRunnerConfig(ctx, &scaleset.RunnerScaleSetJitRunnerSetting{Name: r.name}, c.scaleSet.ID)
 	if err != nil {
