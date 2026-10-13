@@ -5,8 +5,8 @@
 #   ./scripts/install.sh <deployment.toml> ...   add or update deployments, then restart
 #   ./scripts/install.sh                         restart with what's installed
 #
-# A deployment file is named <name>.toml or <name>/config.toml; keep them in
-# a private config repo of your own (see README.md).
+# A deployment file is named <name>.toml or <name>/config.toml. Keep them
+# outside this repo; see "Where to keep deployment configs" in README.md.
 #
 # Deployments already installed and not named stay installed. Everything is
 # checked together before anything is replaced. Safe to rerun.

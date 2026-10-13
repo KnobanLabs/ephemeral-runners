@@ -1,4 +1,4 @@
-# ephemeral-runners
+# macos-ephemeral-runners
 
 Self-hosted GitHub Actions runners on an Apple Silicon Mac that behave like
 GitHub-hosted ones: every job gets a brand-new VM, and the VM is deleted the
@@ -135,7 +135,7 @@ afterwards, so workflows don't change when the Mac or the maintainer does.
 2. **Get the repo.**
 
    ```bash
-   gh repo clone KnobanLabs/ephemeral-runners && cd ephemeral-runners
+   gh repo clone KnobanLabs/macos-ephemeral-runners && cd macos-ephemeral-runners
    ```
 
 3. **Get a deployment config.** Use your existing one, or copy
@@ -225,7 +225,7 @@ is secret, but it's yours, so keep it out of public forks of this repo. Either:
   - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
     with:
       go-version: stable
-  - run: go run github.com/KnobanLabs/ephemeral-runners@develop validate-config deployments/*/config.toml
+  - run: go run github.com/KnobanLabs/macos-ephemeral-runners@develop validate-config deployments/*/config.toml
   ```
 
   It's also a good home for the smoke test, which needs a private repo.
