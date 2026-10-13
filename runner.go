@@ -79,13 +79,19 @@ const (
 //
 // $1 is the runner directory and $2 the user to run as. The JIT config is a
 // registration credential, so it arrives on stdin rather than in argv.
+//
+// Jobs get git that never prompts, as on GitHub-hosted runners. The images
+// configure Git Credential Manager, which otherwise waits forever for a
+// sign-in nobody can give, and a job that runs git without credentials
+// hangs until its timeout. sudo resets the environment, so on that path the
+// variables go through env.
 const guestLauncher = `set -eu
 IFS= read -r JIT
 cd "$1"
 if [ "$(id -u)" -eq 0 ] && [ "$2" != root ]; then
-  exec sudo -u "$2" -H env ACTIONS_RUNNER_INPUT_JITCONFIG="$JIT" ./run.sh < /dev/null
+  exec sudo -u "$2" -H env GCM_INTERACTIVE=never GIT_TERMINAL_PROMPT=0 ACTIONS_RUNNER_INPUT_JITCONFIG="$JIT" ./run.sh < /dev/null
 fi
-ACTIONS_RUNNER_INPUT_JITCONFIG="$JIT" exec ./run.sh < /dev/null
+GCM_INTERACTIVE=never GIT_TERMINAL_PROMPT=0 ACTIONS_RUNNER_INPUT_JITCONFIG="$JIT" exec ./run.sh < /dev/null
 `
 
 // runVM takes a runner from capacity to teardown. It never returns until the
