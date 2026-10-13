@@ -8,7 +8,7 @@
 # Copy this into .github/workflows/ of a PRIVATE repo that can use your
 # runners, never into a public one.
 # Pools come from the input, or else from the EPHEMERAL_RUNNER_POOLS
-# repository (or org) variable, e.g. ["tart-macos", "tart-ubuntu"].
+# repository (or org) variable, e.g. ["tart-macos-arm64", "tart-ubuntu-arm64"].
 name: smoke-test
 
 permissions: {}

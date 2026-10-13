@@ -73,7 +73,7 @@ flowchart TB
 ```yaml
 jobs:
   build:
-    runs-on: tart-ubuntu   # a pool name from your deployment's config
+    runs-on: tart-ubuntu-arm64   # a pool name from your deployment's config
 ```
 
 **Linux is ARM64.** GitHub's `ubuntu-latest` is x86_64; these are closer to
@@ -241,7 +241,7 @@ Install each deployment; the one controller serves them all:
 - **Shared:** the memory and vCPU budgets, the 2-VM macOS cap and the images.
   Whichever org has jobs waiting gets the capacity, first come, first served.
 - **Separate:** GitHub App, key, pools and `job_timeout`. VM and runner names
-  include the deployment (`eph-acme-tart-ubuntu-1a2b3c4d`), so each org only
+  include the deployment (`eph-acme-tart-ubuntu-arm64-1a2b3c4d`), so each org only
   ever sees its own runners.
 - **Pool names** only need to be unique within an org. Two deployments can't
   register the same pool for the same org; `install.sh` rejects that.

@@ -32,10 +32,14 @@ private_key_path = "~/.config/ephemeral-runners/keys/YOUR-DEPLOYMENT-NAME.pem"
 #   token_command = "security find-generic-password -s ephemeral-runners-<name> -w"
 
 # Each pool is a runner scale set; its name is what workflows put in runs-on.
-# Don't use GitHub-hosted labels such as macos-latest or ubuntu-latest.
+# Name pools by OS and CPU architecture (and an org prefix if you like):
+# these Linux VMs are ARM64, so an x86 Linux host elsewhere can register
+# <org>-ubuntu-x64 alongside without a clash. Two controllers can't serve
+# the same pool name in the same org. Don't use GitHub-hosted labels such as
+# macos-latest or ubuntu-latest.
 
 [[pool]]
-name = "tart-macos"
+name = "tart-macos-arm64"
 os = "macos"
 image = "ghcr.io/cirruslabs/macos-tahoe-xcode:latest"
 cpu = 4
@@ -46,7 +50,7 @@ max_runners = 2
 min_idle = 0
 
 [[pool]]
-name = "tart-ubuntu"
+name = "tart-ubuntu-arm64"
 os = "linux"
 image = "ghcr.io/cirruslabs/ubuntu-runner-arm64:24.04"
 cpu = 4

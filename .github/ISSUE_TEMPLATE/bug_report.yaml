@@ -24,7 +24,7 @@ body:
     attributes:
       label: Deployment & Pool
       description: The deployment name and the pool the job used (its runs-on).
-      placeholder: 'acme / tart-ubuntu'
+      placeholder: 'acme / tart-ubuntu-arm64'
     validations:
       required: true
 
@@ -50,7 +50,7 @@ body:
     attributes:
       label: Steps to Reproduce
       placeholder: |
-        1. Queue 4 jobs on tart-macos
+        1. Queue 4 jobs on tart-macos-arm64
         2. ...
     validations:
       required: true
