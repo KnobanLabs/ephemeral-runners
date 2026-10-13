@@ -117,6 +117,10 @@ type Pool struct {
 	// NetworkAllow lists IPv4 CIDRs an isolated VM may reach anyway, e.g.
 	// a package mirror on the LAN.
 	NetworkAllow []string `toml:"network_allow"`
+	// DNS lists the IPv4 DNS servers an isolated macOS VM uses. macOS guests
+	// on Softnet can't reach the gateway, which DHCP names as their DNS
+	// server, so they get public resolvers instead (defaultGuestDNS).
+	DNS []string `toml:"dns"`
 	// RunArgs are extra arguments for `tart run`, e.g. ["--rosetta", "rosetta"].
 	RunArgs []string `toml:"run_args"`
 }
@@ -124,6 +128,9 @@ type Pool struct {
 func (p Pool) isMacOS() bool { return p.OS == "macos" }
 
 func (p Pool) isolated() bool { return p.Network == "isolated" }
+
+// defaultGuestDNS is Cloudflare's and Google's public DNS.
+var defaultGuestDNS = []string{"1.1.1.1", "1.0.0.1", "8.8.8.8", "8.8.4.4"}
 
 // tartRunArgs are the pool's arguments for `tart run`.
 func (p Pool) tartRunArgs() []string {
@@ -224,6 +231,9 @@ func LoadDeployment(path string) (*Deployment, error) {
 		if p.Network == "" {
 			p.Network = "isolated"
 		}
+		if p.DNS == nil && p.isolated() && p.isMacOS() {
+			p.DNS = defaultGuestDNS
+		}
 		if p.RunnerUser == "" {
 			p.RunnerUser = "admin"
 		}
@@ -309,6 +319,14 @@ func (d *Deployment) Validate() error {
 			if _, _, err := net.ParseCIDR(cidr); err != nil || strings.Contains(cidr, ":") {
 				errs = append(errs, fmt.Errorf("pool %q: network_allow entry %q must be an IPv4 CIDR", p.Name, cidr))
 			}
+		}
+		for _, ip := range p.DNS {
+			if a := net.ParseIP(ip); a == nil || a.To4() == nil {
+				errs = append(errs, fmt.Errorf("pool %q: dns entry %q must be an IPv4 address", p.Name, ip))
+			}
+		}
+		if len(p.DNS) > 0 && !(p.isolated() && p.isMacOS()) {
+			errs = append(errs, fmt.Errorf("pool %q: dns only applies to isolated macOS pools", p.Name))
 		}
 		if len(p.NetworkAllow) > 0 && !p.isolated() {
 			errs = append(errs, fmt.Errorf("pool %q: network_allow only applies to isolated pools", p.Name))
