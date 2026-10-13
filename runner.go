@@ -163,7 +163,7 @@ func (c *poolController) serve(ctx context.Context, log *slog.Logger, r *runner)
 		vmLog.Close()
 		os.Remove(vmLog.Name())
 	}()
-	exited, err := c.tart.Start(r.name, c.pool.RunArgs, vmLog)
+	exited, err := c.tart.Start(r.name, c.pool.tartRunArgs(), vmLog)
 	if err != nil {
 		return err
 	}

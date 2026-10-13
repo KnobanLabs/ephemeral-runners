@@ -174,6 +174,11 @@ func run(ctx context.Context, cfg *Config, log *slog.Logger) error {
 	if err != nil {
 		return err
 	}
+	if cfg.usesIsolatedNetwork() {
+		if err := CheckSoftnet(); err != nil {
+			return err
+		}
+	}
 	clients, err := newClients(ctx, cfg)
 	if err != nil {
 		return err
@@ -277,6 +282,12 @@ func check(ctx context.Context, cfg *Config, log *slog.Logger) error {
 	tart, err := newTart()
 	if err != nil {
 		return err
+	}
+	if cfg.usesIsolatedNetwork() {
+		if err := CheckSoftnet(); err != nil {
+			return err
+		}
+		log.Info("Softnet ready for isolated networking")
 	}
 	budget, err := cfg.ResolveBudget()
 	if err != nil {

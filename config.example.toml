@@ -48,6 +48,11 @@ max_runners = 2
 # Booted VMs kept waiting for jobs. Skips the ~30 s macOS boot, but each
 # one holds its memory and CPU while idle.
 min_idle = 0
+# "isolated" (the default): the internet only, not your local network, NAS
+# or other VMs; needs Softnet set up (see the README). "shared": everything
+# this Mac can reach. network_allow opens specific IPv4 ranges anyway.
+# network = "isolated"
+# network_allow = ["192.168.1.50/32"]
 
 [[pool]]
 name = "tart-ubuntu-arm64"

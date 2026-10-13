@@ -132,6 +132,18 @@ afterwards, so workflows don't change when the Mac or the maintainer does.
    tart pull ghcr.io/cirruslabs/macos-tahoe-xcode:latest
    ```
 
+   Then let Softnet, which keeps VMs off your local network (see the
+   [security model](#security-model)), set up VM networking. It needs root
+   for that, and drops it straight after:
+
+   ```bash
+   s=$(readlink -f "$(command -v softnet)") && sudo chown root:wheel "$s" && sudo chmod u+s "$s"
+   ```
+
+   Repeat this after `brew upgrade` installs a new Softnet. Until you do,
+   `ephemeral-runners check` (and so `install.sh`) fails with this command,
+   and the controller won't start isolated pools.
+
 2. **Get the repo.**
 
    ```bash
@@ -293,10 +305,15 @@ limits to know:
   runners. An org's Default runner group blocks public repos unless you allow
   them; keep it that way, and use a private repo for anything that needs the
   runners.
-- **The network:** VMs use Tart's shared (NAT) network. A job can reach your
-  local network, other services on the Mac, and other jobs' VMs running at the
-  same time, including other deployments' VMs. Tart's Softnet
-  (`run_args = ["--net-softnet"]`) restricts this, with extra setup.
+- **The network:** pools default to `network = "isolated"`, Tart's Softnet:
+  a VM can reach globally routable IPv4 addresses (the internet) and nothing
+  in private ranges, so not your local network, NAS or other machines, and
+  not other jobs' VMs. Open specific ranges with `network_allow`. The one
+  exception is this Mac itself, as the VMs' gateway, which they need for
+  DHCP and DNS: services the Mac offers on all interfaces (AirPlay Receiver,
+  Screen Sharing, a dev server on `0.0.0.0`) are reachable from jobs, so turn
+  off the ones you don't need. `network = "shared"` is Tart's plain NAT,
+  which reaches everything the Mac can.
 - **Inside the VM:** jobs run as an admin user with passwordless sudo, like
   GitHub-hosted runners. The VM's single-use runner registration is readable
   from inside the VM; it is valid only for that one job.
