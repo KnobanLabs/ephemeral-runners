@@ -65,13 +65,15 @@ func (t *Tart) Configure(ctx context.Context, name string, cpu, memoryMB, diskGB
 	return os.WriteFile(path, data, 0o644)
 }
 
-// Start boots the VM headless and without audio. The returned channel yields
-// once the VM has shut down, however that happens.
+// Start boots the VM headless, without audio and without a keyboard or
+// pointer. The returned channel yields once the VM has shut down, however that
+// happens.
 //
 // Tart passes audio through to the host by default, input included, so every
-// VM would ask macOS for the Mac's microphone. Jobs need no sound.
+// VM would ask macOS for the Mac's microphone. Jobs need no sound, and no one
+// types into or points at a runner's VM, so it gets no input devices either.
 func (t *Tart) Start(name string, extraArgs []string, log io.Writer) (<-chan error, error) {
-	args := append([]string{"run", name, "--no-graphics", "--no-audio"}, extraArgs...)
+	args := append([]string{"run", name, "--no-graphics", "--no-audio", "--no-keyboard", "--no-pointer"}, extraArgs...)
 	cmd := exec.Command(t.Bin, args...)
 	cmd.Stdout = log
 	cmd.Stderr = log
