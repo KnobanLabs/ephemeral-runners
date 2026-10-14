@@ -114,6 +114,8 @@ afterwards, so workflows don't change when the Mac or the maintainer does.
   is comfortable. Deployments that use the same images share them.
 - **RAM:** 8 GB per macOS job and 4 GB per Ubuntu job, plus 8 GB for the host.
   24 GB is a practical minimum; see [Capacity](#capacity).
+- **Tart 2.29.0 or later.** VMs start with `--no-keyboard` and `--no-pointer`,
+  which older versions lack.
 - Homebrew and Go (`brew install go`).
 - A logged-in user session. The controller is a LaunchAgent and runs only while
   its user is logged in. On a headless Mac, turn on automatic login for that
